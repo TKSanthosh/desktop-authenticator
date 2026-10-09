@@ -43,6 +43,121 @@
       max-width: 800px;
     }
 
+    /* Auth Modal / Overlay */
+    .auth-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.96);
+      backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 9999;
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 34px 30px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+      text-align: center;
+    }
+
+    .auth-icon-wrapper {
+      width: 58px;
+      height: 58px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--primary);
+    }
+
+    .auth-card h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .auth-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .auth-form-group {
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .auth-form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    .auth-input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .auth-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+    }
+
+    .auth-error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 10px;
+      font-weight: 500;
+      min-height: 18px;
+      text-align: center;
+    }
+
+    .auth-switch-link {
+      font-size: 13px;
+      color: var(--primary);
+      cursor: pointer;
+      margin-top: 18px;
+      display: inline-block;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .auth-switch-link:hover {
+      text-decoration: underline;
+    }
+
+    .shake {
+      animation: shake 0.35s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    /* Main Header */
     header {
       margin-bottom: 20px;
       display: flex;
@@ -70,6 +185,21 @@
     .header-actions {
       display: flex;
       gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
     }
 
     button {
@@ -101,6 +231,16 @@
     }
     .btn-secondary:hover {
       background-color: #334460;
+    }
+
+    .btn-logout {
+      background-color: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+    .btn-logout:hover {
+      background-color: rgba(239, 68, 68, 0.25);
+      color: #fff;
     }
 
     .btn-danger {
@@ -135,7 +275,7 @@
       height: 16px;
     }
 
-    input[type="text"], input[type="search"] {
+    input[type="text"], input[type="search"], input[type="password"] {
       width: 100%;
       background: var(--input-bg);
       border: 1px solid var(--card-border);
@@ -151,7 +291,7 @@
       padding-left: 36px;
     }
 
-    input[type="text"]:focus, input[type="search"]:focus {
+    input[type="text"]:focus, input[type="search"]:focus, input[type="password"]:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
     }
@@ -169,7 +309,7 @@
       display: none !important;
     }
 
-    /* Method Selector Tabs */
+    /* Tabs */
     .tabs-bar {
       display: flex;
       gap: 8px;
@@ -203,7 +343,7 @@
       background: rgba(255,255,255,0.04);
     }
 
-    /* Drop Zone for QR */
+    /* Drop Zone */
     .drop-zone {
       border: 2px dashed #334460;
       border-radius: 12px;
@@ -435,7 +575,7 @@
       transform: translateY(10px);
       transition: all 0.25s ease;
       pointer-events: none;
-      z-index: 100;
+      z-index: 10000;
     }
 
     .toast.show {
@@ -458,6 +598,64 @@
 </head>
 <body>
 
+<!-- User Login & Registration Modal Overlay -->
+<div id="auth-overlay" class="auth-overlay">
+  <div class="auth-card" id="auth-card-box">
+    <div class="auth-icon-wrapper">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+    </div>
+
+    <!-- Login Mode -->
+    <div id="auth-mode-login">
+      <h2>Sign In</h2>
+      <p>Enter your username and password to access your encrypted 2FA vault.</p>
+      <form onsubmit="handleLoginSubmit(event)">
+        <div class="auth-form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" class="auth-input" placeholder="e.g. TKSanthosh" autocomplete="username" required>
+        </div>
+        <div class="auth-form-group">
+          <label for="login-password">Password / PIN</label>
+          <input type="password" id="login-password" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <div id="login-error" class="auth-error"></div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 6px; font-size: 14px;">
+          Log In
+        </button>
+      </form>
+      <a class="auth-switch-link" onclick="switchAuthMode('register')">Don't have an account? Sign Up</a>
+    </div>
+
+    <!-- Register Mode -->
+    <div id="auth-mode-register" class="hidden">
+      <h2>Create Account</h2>
+      <p>Set a unique username & password. Your 2FA codes will be encrypted with AES-256.</p>
+      <form onsubmit="handleRegisterSubmit(event)">
+        <div class="auth-form-group">
+          <label for="reg-username">Choose Username</label>
+          <input type="text" id="reg-username" class="auth-input" placeholder="e.g. TKSanthosh" autocomplete="username" required>
+        </div>
+        <div class="auth-form-group">
+          <label for="reg-password">Create Password / PIN</label>
+          <input type="password" id="reg-password" class="auth-input" placeholder="At least 4 characters" autocomplete="new-password" required>
+        </div>
+        <div class="auth-form-group">
+          <label for="reg-password-confirm">Confirm Password / PIN</label>
+          <input type="password" id="reg-password-confirm" class="auth-input" placeholder="Re-enter password" autocomplete="new-password" required>
+        </div>
+        <div id="register-error" class="auth-error"></div>
+        <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 6px; font-size: 14px;">
+          Create & Protect Vault
+        </button>
+      </form>
+      <a class="auth-switch-link" onclick="switchAuthMode('login')">Already have an account? Log In</a>
+    </div>
+  </div>
+</div>
+
 <div class="container">
   <header>
     <div class="title-group">
@@ -467,11 +665,19 @@
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
         Desktop Authenticator
-        <span id="account-count" class="badge-count">(9 accounts)</span>
+        <span id="account-count" class="badge-count"></span>
       </h1>
-      <p>Google Authenticator 2FA codes • Click any code to copy</p>
+      <p>User-Encrypted 2FA Vault (AES-256) • Click code to copy</p>
     </div>
     <div class="header-actions">
+      <div id="user-display" class="user-pill">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span id="logged-username">User</span>
+      </div>
+      <button class="btn-logout" onclick="logout()" title="Log out from vault">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        Log Out
+      </button>
       <button class="btn-primary" onclick="toggleAddForm()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         Add Account
@@ -565,22 +771,279 @@
 
   <!-- Accounts List -->
   <div id="accounts-container" class="accounts-grid">
-    <!-- Account cards dynamically populated -->
+    <!-- Populated dynamically -->
   </div>
 
   <div id="empty-state" class="empty-state hidden">
-    <p style="font-size: 15px; font-weight: 500; color: #cbd5e1; margin-bottom: 6px;">No matching accounts found</p>
-    <p style="font-size: 13px;">Try clearing your search term or add a new account.</p>
+    <p style="font-size: 15px; font-weight: 500; color: #cbd5e1; margin-bottom: 6px;">No 2FA accounts saved yet</p>
+    <p style="font-size: 13px;">Add your first account using the button above.</p>
   </div>
 </div>
 
 <div id="toast" class="toast">Copied to clipboard!</div>
 
 <script>
-// --- Default Initial Accounts (Sample Demo for Clean Installs) ---
-const DEFAULT_ACCOUNTS = [
-  { id: "demo_1", name: "GitHub (Demo)", issuer: "GitHub", secret: "JBSWY3DPEHPK3PXP" }
-];
+// --- Multi-User Cryptographic Vault Architecture ---
+const REGISTRY_STORAGE_KEY = 'authenticator_users_registry_v1';
+const LEGACY_STORAGE_KEY = 'desktop_authenticator_accounts_v2';
+const SESSION_USER_KEY = 'authenticator_current_user';
+
+let currentUsername = null;
+let currentCryptoKey = null;
+let userAccounts = [];
+let renderInterval = null;
+
+function getUsersRegistry() {
+  try {
+    const raw = localStorage.getItem(REGISTRY_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) {
+    return {};
+  }
+}
+
+function saveUsersRegistry(reg) {
+  localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(reg));
+}
+
+// Derive AES-256 Key & Verifier Hash using PBKDF2
+async function deriveUserKeys(password, saltBytes) {
+  const enc = new TextEncoder();
+  const baseKey = await window.crypto.subtle.importKey(
+    'raw',
+    enc.encode(password),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey', 'deriveBits']
+  );
+
+  // 1. AES-GCM Key for Vault Encryption
+  const aesKey = await window.crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+
+  // 2. Hash Verifier for Password Authentication (stored in registry)
+  const verifierBits = await window.crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
+    baseKey,
+    256
+  );
+  const verifierB64 = btoa(String.fromCharCode(...new Uint8Array(verifierBits)));
+
+  return { aesKey, verifierB64 };
+}
+
+async function encryptVault(aesKey, accounts) {
+  const enc = new TextEncoder();
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const cipher = await window.crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    aesKey,
+    enc.encode(JSON.stringify(accounts))
+  );
+
+  return {
+    iv: btoa(String.fromCharCode(...iv)),
+    cipher: btoa(String.fromCharCode(...new Uint8Array(cipher)))
+  };
+}
+
+async function decryptVault(aesKey, ivB64, cipherB64) {
+  const dec = new TextDecoder();
+  const iv = Uint8Array.from(atob(ivB64), c => c.charCodeAt(0));
+  const cipher = Uint8Array.from(atob(cipherB64), c => c.charCodeAt(0));
+  const decrypted = await window.crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv },
+    aesKey,
+    cipher
+  );
+  return JSON.parse(dec.decode(decrypted));
+}
+
+// UI Switch between Login & Register
+function switchAuthMode(mode) {
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('register-error').textContent = '';
+  if (mode === 'register') {
+    document.getElementById('auth-mode-login').classList.add('hidden');
+    document.getElementById('auth-mode-register').classList.remove('hidden');
+    document.getElementById('reg-username').focus();
+  } else {
+    document.getElementById('auth-mode-register').classList.add('hidden');
+    document.getElementById('auth-mode-login').classList.remove('hidden');
+    document.getElementById('login-username').focus();
+  }
+}
+
+// Handle Sign Up / Register
+async function handleRegisterSubmit(e) {
+  e.preventDefault();
+  const user = document.getElementById('reg-username').value.trim();
+  const pass1 = document.getElementById('reg-password').value;
+  const pass2 = document.getElementById('reg-password-confirm').value;
+  const errEl = document.getElementById('register-error');
+
+  if (user.length < 2) {
+    errEl.textContent = 'Username must be at least 2 characters.';
+    return;
+  }
+  if (pass1.length < 4) {
+    errEl.textContent = 'Password must be at least 4 characters.';
+    return;
+  }
+  if (pass1 !== pass2) {
+    errEl.textContent = 'Passwords do not match.';
+    return;
+  }
+
+  const registry = getUsersRegistry();
+  const userKey = user.toLowerCase();
+  if (registry[userKey]) {
+    errEl.textContent = 'Username already exists. Please choose another or Log In.';
+    return;
+  }
+
+  // Check if legacy imported accounts exist on this device to migrate
+  let initialAccounts = [];
+  try {
+    const rawLegacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (rawLegacy) {
+      const parsed = JSON.parse(rawLegacy);
+      if (Array.isArray(parsed) && parsed.length > 0) initialAccounts = parsed;
+    }
+  } catch(e) {}
+
+  const salt = window.crypto.getRandomValues(new Uint8Array(16));
+  const saltB64 = btoa(String.fromCharCode(...salt));
+  const { aesKey, verifierB64 } = await deriveUserKeys(pass1, salt);
+  const encrypted = await encryptVault(aesKey, initialAccounts);
+
+  registry[userKey] = {
+    username: user,
+    salt: saltB64,
+    verifier: verifierB64,
+    iv: encrypted.iv,
+    cipher: encrypted.cipher,
+    created: Date.now()
+  };
+
+  saveUsersRegistry(registry);
+  // Clear unencrypted legacy fallback
+  try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch(e){}
+
+  currentUsername = user;
+  currentCryptoKey = aesKey;
+  userAccounts = initialAccounts;
+
+  finishLogin();
+}
+
+// Handle Login
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const user = document.getElementById('login-username').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const cardBox = document.getElementById('auth-card-box');
+
+  const registry = getUsersRegistry();
+  const userKey = user.toLowerCase();
+  const record = registry[userKey];
+
+  if (!record) {
+    errEl.textContent = 'User not found. Check username or Sign Up.';
+    shakeAuthCard(cardBox);
+    return;
+  }
+
+  try {
+    const salt = Uint8Array.from(atob(record.salt), c => c.charCodeAt(0));
+    const { aesKey, verifierB64 } = await deriveUserKeys(pass, salt);
+
+    if (verifierB64 !== record.verifier) {
+      errEl.textContent = 'Incorrect password.';
+      shakeAuthCard(cardBox);
+      return;
+    }
+
+    // Decrypt Vault
+    const accounts = await decryptVault(aesKey, record.iv, record.cipher);
+    currentUsername = record.username;
+    currentCryptoKey = aesKey;
+    userAccounts = accounts;
+
+    finishLogin();
+  } catch (err) {
+    errEl.textContent = 'Failed to decrypt vault: ' + err.message;
+    shakeAuthCard(cardBox);
+  }
+}
+
+function shakeAuthCard(el) {
+  el.classList.remove('shake');
+  void el.offsetWidth;
+  el.classList.add('shake');
+}
+
+function finishLogin() {
+  sessionStorage.setItem(SESSION_USER_KEY, currentUsername);
+  document.getElementById('logged-username').textContent = currentUsername;
+  document.getElementById('auth-overlay').classList.add('hidden');
+  render();
+  if (!renderInterval) {
+    renderInterval = setInterval(render, 500);
+  }
+  showToast(`Welcome, ${currentUsername}!`);
+}
+
+function logout() {
+  currentUsername = null;
+  currentCryptoKey = null;
+  userAccounts = [];
+  sessionStorage.removeItem(SESSION_USER_KEY);
+  if (renderInterval) {
+    clearInterval(renderInterval);
+    renderInterval = null;
+  }
+  document.getElementById('accounts-container').innerHTML = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  switchAuthMode('login');
+  showToast('Logged out');
+}
+
+async function saveCurrentVault() {
+  if (!currentUsername || !currentCryptoKey) return;
+  const registry = getUsersRegistry();
+  const userKey = currentUsername.toLowerCase();
+  const record = registry[userKey];
+  if (!record) return;
+
+  const encrypted = await encryptVault(currentCryptoKey, userAccounts);
+  record.iv = encrypted.iv;
+  record.cipher = encrypted.cipher;
+  registry[userKey] = record;
+  saveUsersRegistry(registry);
+}
+
+// Initial check on load
+function checkInitialState() {
+  const registry = getUsersRegistry();
+  const usersCount = Object.keys(registry).length;
+
+  if (usersCount === 0) {
+    // No users registered yet -> Show Register screen by default
+    switchAuthMode('register');
+  } else {
+    // Show Login
+    switchAuthMode('login');
+  }
+}
 
 // --- Tab Switching ---
 function switchAddTab(tab) {
@@ -603,7 +1066,7 @@ function switchAddTab(tab) {
   }
 }
 
-// --- Drag & Drop Setup ---
+// Drag & Drop
 const dropZone = document.getElementById('drop-zone');
 ['dragenter', 'dragover'].forEach(name => {
   dropZone.addEventListener(name, (e) => {
@@ -622,17 +1085,16 @@ dropZone.addEventListener('drop', (e) => {
   if (files && files.length > 0) processQrImageFile(files[0]);
 });
 
-// Global Paste (Ctrl+V) anywhere on the page
+// Global Paste
 document.addEventListener('paste', (e) => {
+  if (!currentUsername) return; // Ignore if not logged in
   const items = (e.clipboardData || window.clipboardData).items;
   if (!items) return;
   for (let item of items) {
     if (item.kind === 'file' && item.type.startsWith('image/')) {
       const file = item.getAsFile();
       if (file) {
-        // Automatically open add form in QR tab and scan
-        const panel = document.getElementById('add-form-panel');
-        panel.classList.remove('hidden');
+        document.getElementById('add-form-panel').classList.remove('hidden');
         switchAddTab('qr');
         processQrImageFile(file);
       }
@@ -654,7 +1116,7 @@ function showQrStatus(msg, isSuccess) {
   el.classList.remove('hidden');
 }
 
-// --- QR Decoding & Parsing ---
+// QR Decoding
 async function processQrImageFile(file) {
   showQrStatus('Scanning QR code...', true);
   try {
@@ -664,7 +1126,7 @@ async function processQrImageFile(file) {
       img.onload = async () => {
         const qrText = await scanImageForQr(img);
         if (!qrText) {
-          showQrStatus('No QR code detected in the image. Please make sure the QR is clear and well-lit.', false);
+          showQrStatus('No QR code detected. Ensure image is clear and well-lit.', false);
           return;
         }
         handleDecodedQrText(qrText);
@@ -679,18 +1141,14 @@ async function processQrImageFile(file) {
 }
 
 async function scanImageForQr(img) {
-  // 1. Try native BarcodeDetector if available (Chromium / Edge)
   if ('BarcodeDetector' in window) {
     try {
       const detector = new BarcodeDetector({ formats: ['qr_code'] });
       const barcodes = await detector.detect(img);
-      if (barcodes.length > 0 && barcodes[0].rawValue) {
-        return barcodes[0].rawValue;
-      }
+      if (barcodes.length > 0 && barcodes[0].rawValue) return barcodes[0].rawValue;
     } catch (e) {}
   }
 
-  // 2. Try jsQR on canvas
   if (typeof jsQR !== 'undefined') {
     const canvas = document.createElement('canvas');
     canvas.width = img.naturalWidth || img.width;
@@ -702,7 +1160,6 @@ async function scanImageForQr(img) {
     const code = jsQR(imgData.data, imgData.width, imgData.height);
     if (code && code.data) return code.data;
 
-    // Secondary pass: scale down if high-res screenshot
     if (canvas.width > 800 || canvas.height > 800) {
       const scale = Math.min(800 / canvas.width, 800 / canvas.height);
       const smallCanvas = document.createElement('canvas');
@@ -719,10 +1176,10 @@ async function scanImageForQr(img) {
   return null;
 }
 
-function handleDecodedQrText(text) {
+async function handleDecodedQrText(text) {
   const trimmed = text.trim();
 
-  // Case A: Google Authenticator export QR code
+  // Google Migration Bulk Export
   if (trimmed.startsWith('otpauth-migration://offline?')) {
     try {
       const url = new URL(trimmed);
@@ -732,18 +1189,17 @@ function handleDecodedQrText(text) {
         showQrStatus('Could not extract any accounts from migration QR.', false);
         return;
       }
-      const existing = getAccounts();
       parsedAccounts.forEach(acc => {
-        existing.unshift({
+        userAccounts.unshift({
           id: 'acc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
           name: acc.name,
           issuer: acc.issuer,
           secret: acc.secret
         });
       });
-      saveAccounts(existing);
+      await saveCurrentVault();
       render();
-      showQrStatus(`Successfully imported ${parsedAccounts.length} account(s) from Google Authenticator!`, true);
+      showQrStatus(`Successfully imported ${parsedAccounts.length} account(s)!`, true);
       showToast(`Imported ${parsedAccounts.length} accounts!`);
       setTimeout(() => toggleAddForm(), 1200);
       return;
@@ -753,7 +1209,7 @@ function handleDecodedQrText(text) {
     }
   }
 
-  // Case B: Standard otpauth://totp/ QR code
+  // Standard otpauth://
   if (trimmed.startsWith('otpauth://')) {
     try {
       const url = new URL(trimmed);
@@ -768,14 +1224,13 @@ function handleDecodedQrText(text) {
         showQrStatus('QR code did not contain a secret key.', false);
         return;
       }
-      const accounts = getAccounts();
-      accounts.unshift({
+      userAccounts.unshift({
         id: 'acc_' + Date.now(),
         name: label || issuer || 'New Account',
         issuer: issuer,
         secret: secret
       });
-      saveAccounts(accounts);
+      await saveCurrentVault();
       render();
       showQrStatus(`Added "${label || issuer || 'New Account'}" successfully!`, true);
       showToast(`Added ${label || issuer || 'Account'}!`);
@@ -787,17 +1242,16 @@ function handleDecodedQrText(text) {
     }
   }
 
-  // Case C: Plain Base32 key encoded in QR
+  // Plain Base32
   const cleaned = trimmed.replace(/[\s=-]/g, '').toUpperCase();
   if (/^[A-Z2-7]{16,64}$/.test(cleaned)) {
-    const accounts = getAccounts();
-    accounts.unshift({
+    userAccounts.unshift({
       id: 'acc_' + Date.now(),
       name: 'Imported Key',
       issuer: '2FA',
       secret: cleaned
     });
-    saveAccounts(accounts);
+    await saveCurrentVault();
     render();
     showQrStatus('Added secret key successfully!', true);
     showToast('Secret key imported!');
@@ -805,15 +1259,14 @@ function handleDecodedQrText(text) {
     return;
   }
 
-  showQrStatus('QR code decoded but unrecognized format: ' + trimmed.substring(0, 40) + '...', false);
+  showQrStatus('Unrecognized QR format.', false);
 }
 
-// Google Authenticator Migration Protobuf Decoder in Pure JS
+// Google Authenticator Migration Protobuf Decoder
 function decodeGoogleMigration(dataBase64) {
   const binary = atob(dataBase64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-
   function readVarint(arr, offset) {
     let res = 0, shift = 0;
     while (offset < arr.length) {
@@ -824,7 +1277,6 @@ function decodeGoogleMigration(dataBase64) {
     }
     return [res, offset];
   }
-
   function bytesToBase32(rawBytes) {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
     let bits = 0, value = 0, output = '';
@@ -839,71 +1291,46 @@ function decodeGoogleMigration(dataBase64) {
     if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
     return output;
   }
-
-  function parseOtpParam(chunk) {
-    let pos = 0;
-    const p = {};
+  function parseOtp(chunk) {
+    let pos = 0, p = {};
     while (pos < chunk.length) {
-      let tag;
-      [tag, pos] = readVarint(chunk, pos);
-      const fieldNum = tag >> 3;
-      const wireType = tag & 0x7;
-      if (wireType === 0) {
-        let val;
-        [val, pos] = readVarint(chunk, pos);
-        p[fieldNum] = val;
-      } else if (wireType === 2) {
-        let len;
-        [len, pos] = readVarint(chunk, pos);
-        p[fieldNum] = chunk.slice(pos, pos + len);
-        pos += len;
-      }
+      let tag; [tag, pos] = readVarint(chunk, pos);
+      const f = tag >> 3, w = tag & 0x7;
+      if (w === 0) { let v; [v, pos] = readVarint(chunk, pos); p[f] = v; }
+      else if (w === 2) { let l; [l, pos] = readVarint(chunk, pos); p[f] = chunk.slice(pos, pos + l); pos += l; }
     }
     return p;
   }
-
-  let pos = 0;
-  const accounts = [];
+  let pos = 0, res = [];
   while (pos < bytes.length) {
-    let tag;
-    [tag, pos] = readVarint(bytes, pos);
-    const fieldNum = tag >> 3;
-    const wireType = tag & 0x7;
-    if (wireType === 0) {
-      let val;
-      [val, pos] = readVarint(bytes, pos);
-    } else if (wireType === 2) {
-      let len;
-      [len, pos] = readVarint(bytes, pos);
-      const chunk = bytes.slice(pos, pos + len);
-      pos += len;
-      if (fieldNum === 1) {
-        const otp = parseOtpParam(chunk);
+    let tag; [tag, pos] = readVarint(bytes, pos);
+    const f = tag >> 3, w = tag & 0x7;
+    if (w === 0) { let v; [v, pos] = readVarint(bytes, pos); }
+    else if (w === 2) {
+      let l; [l, pos] = readVarint(bytes, pos);
+      const chunk = bytes.slice(pos, pos + l); pos += l;
+      if (f === 1) {
+        const otp = parseOtp(chunk);
         const secret = otp[1] ? bytesToBase32(otp[1]) : '';
         const name = otp[2] ? new TextDecoder().decode(otp[2]) : '';
         const issuer = otp[3] ? new TextDecoder().decode(otp[3]) : '';
-        if (secret) accounts.push({ name, issuer, secret });
+        if (secret) res.push({ name, issuer, secret });
       }
     }
   }
-  return accounts;
+  return res;
 }
 
-// --- TOTP Algorithm Implementation (RFC 6238) ---
-function base32ToBytes(base32) {
-  const clean = base32.replace(/[\s=-]/g, '').toUpperCase();
+// TOTP Implementation
+function base32ToBytes(b32) {
+  const clean = b32.replace(/[\s=-]/g, '').toUpperCase();
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-  let bits = 0, value = 0;
-  const bytes = [];
+  let bits = 0, value = 0, bytes = [];
   for (let i = 0; i < clean.length; i++) {
     const idx = alphabet.indexOf(clean[i]);
     if (idx === -1) continue;
-    value = (value << 5) | idx;
-    bits += 5;
-    if (bits >= 8) {
-      bytes.push((value >>> (bits - 8)) & 255);
-      bits -= 8;
-    }
+    value = (value << 5) | idx; bits += 5;
+    if (bits >= 8) { bytes.push((value >>> (bits - 8)) & 255); bits -= 8; }
   }
   return new Uint8Array(bytes);
 }
@@ -911,13 +1338,10 @@ function base32ToBytes(base32) {
 function sha1(bytes) {
   let h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476, h4 = 0xc3d2e1f0;
   const n = bytes.length, bitLen = n * 8, padLen = (((n + 8) >> 6) + 1) * 64;
-  const padded = new Uint8Array(padLen);
-  padded.set(bytes);
-  padded[n] = 0x80;
+  const padded = new Uint8Array(padLen); padded.set(bytes); padded[n] = 0x80;
   const view = new DataView(padded.buffer);
   view.setUint32(padLen - 4, bitLen & 0xffffffff, false);
   view.setUint32(padLen - 8, Math.floor(bitLen / 0x100000000), false);
-
   const w = new Uint32Array(80);
   for (let i = 0; i < padLen; i += 64) {
     for (let t = 0; t < 16; t++) w[t] = view.getUint32(i + t * 4, false);
@@ -937,8 +1361,7 @@ function sha1(bytes) {
     }
     h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0; h4 = (h4 + e) >>> 0;
   }
-  const res = new Uint8Array(20);
-  const outView = new DataView(res.buffer);
+  const res = new Uint8Array(20); const outView = new DataView(res.buffer);
   outView.setUint32(0, h0, false); outView.setUint32(4, h1, false);
   outView.setUint32(8, h2, false); outView.setUint32(12, h3, false); outView.setUint32(16, h4, false);
   return res;
@@ -946,24 +1369,15 @@ function sha1(bytes) {
 
 function hmacSha1(key, message) {
   const blockSize = 64;
-  let k = key;
-  if (k.length > blockSize) k = sha1(k);
-  const keyPad = new Uint8Array(blockSize);
-  keyPad.set(k);
-  const oKeyPad = new Uint8Array(blockSize);
-  const iKeyPad = new Uint8Array(blockSize);
-  for (let i = 0; i < blockSize; i++) {
-    oKeyPad[i] = keyPad[i] ^ 0x5c;
-    iKeyPad[i] = keyPad[i] ^ 0x36;
-  }
+  let k = key; if (k.length > blockSize) k = sha1(k);
+  const keyPad = new Uint8Array(blockSize); keyPad.set(k);
+  const oKeyPad = new Uint8Array(blockSize), iKeyPad = new Uint8Array(blockSize);
+  for (let i = 0; i < blockSize; i++) { oKeyPad[i] = keyPad[i] ^ 0x5c; iKeyPad[i] = keyPad[i] ^ 0x36; }
   const innerMsg = new Uint8Array(blockSize + message.length);
-  innerMsg.set(iKeyPad, 0);
-  innerMsg.set(message, blockSize);
+  innerMsg.set(iKeyPad, 0); innerMsg.set(message, blockSize);
   const innerHash = sha1(innerMsg);
-
   const outerMsg = new Uint8Array(blockSize + 20);
-  outerMsg.set(oKeyPad, 0);
-  outerMsg.set(innerHash, blockSize);
+  outerMsg.set(oKeyPad, 0); outerMsg.set(innerHash, blockSize);
   return sha1(outerMsg);
 }
 
@@ -971,13 +1385,11 @@ function calculateTOTP(secretBase32, period = 30, digits = 6, timestamp = Date.n
   try {
     const key = base32ToBytes(secretBase32);
     if (!key || key.length === 0) return '------';
-
     const counter = Math.floor(timestamp / 1000 / period);
     const counterBuf = new Uint8Array(8);
     const view = new DataView(counterBuf.buffer);
     view.setUint32(0, Math.floor(counter / 0x100000000), false);
     view.setUint32(4, counter >>> 0, false);
-
     const hmac = hmacSha1(key, counterBuf);
     const offset = hmac[hmac.length - 1] & 0x0f;
     const binary =
@@ -985,45 +1397,21 @@ function calculateTOTP(secretBase32, period = 30, digits = 6, timestamp = Date.n
       ((hmac[offset + 1] & 0xff) << 16) |
       ((hmac[offset + 2] & 0xff) << 8) |
       (hmac[offset + 3] & 0xff);
-
-    const otp = binary % (10 ** digits);
-    return otp.toString().padStart(digits, '0');
+    return (binary % (10 ** digits)).toString().padStart(digits, '0');
   } catch (err) {
     return 'ERR';
   }
 }
 
-// --- App State & Storage ---
-const STORAGE_KEY = 'desktop_authenticator_accounts_v2';
-
-function getAccounts() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {}
-  saveAccounts(DEFAULT_ACCOUNTS);
-  return DEFAULT_ACCOUNTS;
-}
-
-function saveAccounts(accounts) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
-  } catch (e) {}
-}
-
+// UI Actions
 function toggleAddForm() {
   const panel = document.getElementById('add-form-panel');
   panel.classList.toggle('hidden');
   document.getElementById('qr-status').classList.add('hidden');
-  if (!panel.classList.contains('hidden')) {
-    switchAddTab('qr');
-  }
+  if (!panel.classList.contains('hidden')) switchAddTab('qr');
 }
 
-function saveAccount() {
+async function saveAccount() {
   const nameInput = document.getElementById('acc-name');
   const secretInput = document.getElementById('acc-secret');
   const rawSecret = secretInput.value.trim();
@@ -1051,15 +1439,14 @@ function saveAccount() {
   finalSecret = finalSecret.replace(/[\s=-]/g, '').toUpperCase();
   if (!finalName) finalName = finalIssuer || 'Account';
 
-  const accounts = getAccounts();
-  accounts.unshift({
+  userAccounts.unshift({
     id: 'acc_' + Date.now(),
     name: finalName,
     issuer: finalIssuer,
     secret: finalSecret
   });
 
-  saveAccounts(accounts);
+  await saveCurrentVault();
   nameInput.value = '';
   secretInput.value = '';
   toggleAddForm();
@@ -1067,10 +1454,10 @@ function saveAccount() {
   showToast('Account added successfully!');
 }
 
-function deleteAccount(id) {
+async function deleteAccount(id) {
   if (!confirm('Are you sure you want to remove this account?')) return;
-  const accounts = getAccounts().filter(a => a.id !== id);
-  saveAccounts(accounts);
+  userAccounts = userAccounts.filter(a => a.id !== id);
+  await saveCurrentVault();
   render();
 }
 
@@ -1097,12 +1484,11 @@ function showToast(msg) {
 }
 
 function exportData() {
-  const accounts = getAccounts();
-  const blob = new Blob([JSON.stringify(accounts, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify(userAccounts, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `authenticator-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `authenticator-${currentUsername || 'backup'}-${new Date().toISOString().split('T')[0]}.json`;
   a.click();
 }
 
@@ -1110,11 +1496,12 @@ function importData(e) {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = (event) => {
+  reader.onload = async (event) => {
     try {
       const data = JSON.parse(event.target.result);
       if (Array.isArray(data)) {
-        saveAccounts(data);
+        userAccounts = data;
+        await saveCurrentVault();
         render();
         showToast('Imported ' + data.length + ' accounts!');
       }
@@ -1125,15 +1512,16 @@ function importData(e) {
   reader.readAsText(file);
 }
 
-// --- Render Loop ---
+// Render Loop
 function render() {
-  const allAccounts = getAccounts();
-  document.getElementById('account-count').textContent = `(${allAccounts.length} accounts)`;
+  if (!currentUsername) return;
+
+  document.getElementById('account-count').textContent = `(${userAccounts.length} accounts)`;
 
   const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
   const filtered = query
-    ? allAccounts.filter(a => (a.name || '').toLowerCase().includes(query) || (a.issuer || '').toLowerCase().includes(query))
-    : allAccounts;
+    ? userAccounts.filter(a => (a.name || '').toLowerCase().includes(query) || (a.issuer || '').toLowerCase().includes(query))
+    : userAccounts;
 
   const container = document.getElementById('accounts-container');
   const emptyState = document.getElementById('empty-state');
@@ -1147,7 +1535,7 @@ function render() {
 
   const now = Date.now();
   const secondsLeft = 30 - (Math.floor(now / 1000) % 30);
-  const circumference = 2 * Math.PI * 14; // r=14 -> ~88
+  const circumference = 2 * Math.PI * 14;
   const progressOffset = circumference - (circumference * (secondsLeft / 30));
 
   const isLow = secondsLeft <= 5;
@@ -1203,9 +1591,8 @@ function escapeHtml(str) {
   );
 }
 
-// Initial render
-render();
-setInterval(render, 500);
+// Start
+checkInitialState();
 </script>
 
 </body>
