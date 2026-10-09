@@ -1,0 +1,22 @@
+{
+  "name": "desktop-authenticator",
+  "version": "1.0.0",
+  "description": "Privacy-first offline Time-based One-Time Password (TOTP) authenticator with QR scan and desktop support",
+  "main": "index.html",
+  "scripts": {
+    "start": "start index.html"
+  },
+  "keywords": [
+    "totp",
+    "2fa",
+    "mfa",
+    "authenticator",
+    "google-authenticator",
+    "offline",
+    "privacy"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "jsqr": "^1.4.0"
+  }
+}

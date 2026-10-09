@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Desktop Authenticator</title>
+  <script src="jsQR.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151e2e;
+      --card-hover: #1b263b;
+      --card-border: #26354a;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-hover: #0284c7;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --input-bg: #0d1525;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    header {
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .title-group h1 {
+      font-size: 24px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+    }
+
+    .title-group p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: #0b0f19;
+      font-weight: 600;
+    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background-color: #26354a;
+      color: var(--text-main);
+    }
+    .btn-secondary:hover {
+      background-color: #334460;
+    }
+
+    .btn-danger {
+      background-color: transparent;
+      color: var(--text-muted);
+      padding: 6px 8px;
+    }
+    .btn-danger:hover {
+      color: var(--danger);
+      background-color: rgba(239, 68, 68, 0.1);
+    }
+
+    /* Search & Filter Bar */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      width: 16px;
+      height: 16px;
+    }
+
+    input[type="text"], input[type="search"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input-wrapper input {
+      padding-left: 36px;
+    }
+
+    input[type="text"]:focus, input[type="search"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Modal / Form */
+    .card-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Method Selector Tabs */
+    .tabs-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--input-bg);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border: 1px solid var(--card-border);
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn.active {
+      background: #26354a;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: #fff;
+      background: rgba(255,255,255,0.04);
+    }
+
+    /* Drop Zone for QR */
+    .drop-zone {
+      border: 2px dashed #334460;
+      border-radius: 12px;
+      padding: 26px 20px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(13, 21, 37, 0.6);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--primary);
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    .drop-icon {
+      width: 42px;
+      height: 42px;
+      margin-bottom: 10px;
+      color: var(--primary);
+      stroke-width: 1.5;
+    }
+
+    .paste-badge {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 11px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .qr-status-msg {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .qr-status-msg.success {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .qr-status-msg.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Accounts List */
+    .accounts-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .account-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .account-card:hover {
+      background: var(--card-hover);
+      border-color: #3b4f6b;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .account-info {
+      flex: 1;
+      min-width: 0;
+      padding-right: 12px;
+    }
+
+    .account-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+
+    .account-issuer {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--primary);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+
+    .account-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      word-break: break-all;
+    }
+
+    .account-secret-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .code-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .code-pill {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--primary);
+      cursor: pointer;
+      user-select: all;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      transition: all 0.15s ease;
+    }
+
+    .code-pill:hover {
+      border-color: var(--primary);
+      background: #101c33;
+      transform: translateY(-1px);
+    }
+
+    .code-pill:active {
+      transform: translateY(1px);
+    }
+
+    /* Timer Dial */
+    .timer-badge {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .timer-svg {
+      transform: rotate(-90deg);
+      width: 36px;
+      height: 36px;
+    }
+
+    .timer-circle-bg {
+      fill: none;
+      stroke: #26354a;
+      stroke-width: 3;
+    }
+
+    .timer-circle-progress {
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 88;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.5s linear, stroke 0.3s;
+    }
+
+    .timer-text {
+      position: absolute;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #042f22;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.25s ease;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+
+    .badge-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: normal;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="title-group">
+      <h1>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Desktop Authenticator
+        <span id="account-count" class="badge-count">(9 accounts)</span>
+      </h1>
+      <p>Google Authenticator 2FA codes • Click any code to copy</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" onclick="toggleAddForm()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        Add Account
+      </button>
+      <button class="btn-secondary" onclick="exportData()" title="Backup Accounts to JSON">
+        Backup
+      </button>
+      <button class="btn-secondary" onclick="document.getElementById('import-file').click()" title="Import Accounts">
+        Import
+      </button>
+      <input type="file" id="import-file" style="display: none;" accept=".json" onchange="importData(event)">
+    </div>
+  </header>
+
+  <!-- Search Filter -->
+  <div class="search-bar">
+    <div class="search-input-wrapper">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="search" id="search-input" placeholder="Search accounts (e.g. OpenVPN, AWS, Twitter, Google, Sify)..." oninput="render()">
+    </div>
+  </div>
+
+  <!-- Add Account Form with QR Upload & Manual Key Options -->
+  <div id="add-form-panel" class="card-panel hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+      <h3 style="font-size: 16px; color: #fff;">Add 2FA Account</h3>
+      <button class="btn-danger" onclick="toggleAddForm()" style="padding: 4px 8px; font-size: 14px;">✕</button>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <div class="tabs-bar">
+      <button id="tab-btn-qr" class="tab-btn active" onclick="switchAddTab('qr')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Upload / Scan QR Code
+      </button>
+      <button id="tab-btn-key" class="tab-btn" onclick="switchAddTab('key')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="8" cy="15" r="4"></circle>
+          <line x1="10.85" y1="12.15" x2="19" y2="4"></line>
+          <line x1="18" y1="5" x2="20" y2="7"></line>
+          <line x1="15" y1="8" x2="17" y2="10"></line>
+        </svg>
+        Enter Setup Key Manually
+      </button>
+    </div>
+
+    <!-- Tab 1: QR Upload / Drop Zone -->
+    <div id="tab-content-qr" class="tab-content">
+      <div id="drop-zone" class="drop-zone" onclick="document.getElementById('qr-file-input').click()">
+        <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <div style="font-weight: 600; font-size: 14px; color: #fff; margin-bottom: 4px;">
+          Click to upload QR image, or drag & drop here
+        </div>
+        <div style="font-size: 12px; color: var(--text-muted);">
+          Supports standard 2FA QR codes & Google Authenticator export QR codes (PNG, JPG, WebP)
+        </div>
+        <div class="paste-badge">
+          📋 Shortcut: You can also press <strong>Ctrl + V</strong> to paste a screenshot directly!
+        </div>
+      </div>
+      <input type="file" id="qr-file-input" accept="image/*" style="display: none;" onchange="handleQrFileSelect(event)">
+      <div id="qr-status" class="qr-status-msg hidden"></div>
+    </div>
+
+    <!-- Tab 2: Manual Key Entry -->
+    <div id="tab-content-key" class="tab-content hidden">
+      <div class="form-group">
+        <label for="acc-name">Account Label / Service</label>
+        <input type="text" id="acc-name" placeholder="e.g. GitHub, AWS, Google, Work VPN">
+      </div>
+      <div class="form-group">
+        <label for="acc-secret">Secret Setup Key or otpauth:// URI</label>
+        <input type="text" id="acc-secret" placeholder="e.g. JBSWY3DPEHPK3PXP" autocomplete="off" spellcheck="false">
+        <div class="hint">Base32 secret (16-64 characters). Spaces and dashes are removed automatically.</div>
+      </div>
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+        <button class="btn-secondary" onclick="toggleAddForm()">Cancel</button>
+        <button class="btn-primary" onclick="saveAccount()">Save & Generate Codes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accounts List -->
+  <div id="accounts-container" class="accounts-grid">
+    <!-- Account cards dynamically populated -->
+  </div>
+
+  <div id="empty-state" class="empty-state hidden">
+    <p style="font-size: 15px; font-weight: 500; color: #cbd5e1; margin-bottom: 6px;">No matching accounts found</p>
+    <p style="font-size: 13px;">Try clearing your search term or add a new account.</p>
+  </div>
+</div>
+
+<div id="toast" class="toast">Copied to clipboard!</div>
+
+<script>
+// --- Default Initial Accounts (Sample Demo for Clean Installs) ---
+const DEFAULT_ACCOUNTS = [
+  { id: "demo_1", name: "GitHub (Demo)", issuer: "GitHub", secret: "JBSWY3DPEHPK3PXP" }
+];
+
+// --- Tab Switching ---
+function switchAddTab(tab) {
+  const qrBtn = document.getElementById('tab-btn-qr');
+  const keyBtn = document.getElementById('tab-btn-key');
+  const qrContent = document.getElementById('tab-content-qr');
+  const keyContent = document.getElementById('tab-content-key');
+
+  if (tab === 'qr') {
+    qrBtn.classList.add('active');
+    keyBtn.classList.remove('active');
+    qrContent.classList.remove('hidden');
+    keyContent.classList.add('hidden');
+  } else {
+    keyBtn.classList.add('active');
+    qrBtn.classList.remove('active');
+    keyContent.classList.remove('hidden');
+    qrContent.classList.add('hidden');
+    document.getElementById('acc-name').focus();
+  }
+}
+
+// --- Drag & Drop Setup ---
+const dropZone = document.getElementById('drop-zone');
+['dragenter', 'dragover'].forEach(name => {
+  dropZone.addEventListener(name, (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+});
+['dragleave', 'drop'].forEach(name => {
+  dropZone.addEventListener(name, (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+  });
+});
+dropZone.addEventListener('drop', (e) => {
+  const files = e.dataTransfer.files;
+  if (files && files.length > 0) processQrImageFile(files[0]);
+});
+
+// Global Paste (Ctrl+V) anywhere on the page
+document.addEventListener('paste', (e) => {
+  const items = (e.clipboardData || window.clipboardData).items;
+  if (!items) return;
+  for (let item of items) {
+    if (item.kind === 'file' && item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      if (file) {
+        // Automatically open add form in QR tab and scan
+        const panel = document.getElementById('add-form-panel');
+        panel.classList.remove('hidden');
+        switchAddTab('qr');
+        processQrImageFile(file);
+      }
+      break;
+    }
+  }
+});
+
+function handleQrFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processQrImageFile(file);
+  e.target.value = '';
+}
+
+function showQrStatus(msg, isSuccess) {
+  const el = document.getElementById('qr-status');
+  el.textContent = msg;
+  el.className = 'qr-status-msg ' + (isSuccess ? 'success' : 'error');
+  el.classList.remove('hidden');
+}
+
+// --- QR Decoding & Parsing ---
+async function processQrImageFile(file) {
+  showQrStatus('Scanning QR code...', true);
+  try {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const img = new Image();
+      img.onload = async () => {
+        const qrText = await scanImageForQr(img);
+        if (!qrText) {
+          showQrStatus('No QR code detected in the image. Please make sure the QR is clear and well-lit.', false);
+          return;
+        }
+        handleDecodedQrText(qrText);
+      };
+      img.onerror = () => showQrStatus('Failed to load image file.', false);
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  } catch (err) {
+    showQrStatus('Error reading file: ' + err.message, false);
+  }
+}
+
+async function scanImageForQr(img) {
+  // 1. Try native BarcodeDetector if available (Chromium / Edge)
+  if ('BarcodeDetector' in window) {
+    try {
+      const detector = new BarcodeDetector({ formats: ['qr_code'] });
+      const barcodes = await detector.detect(img);
+      if (barcodes.length > 0 && barcodes[0].rawValue) {
+        return barcodes[0].rawValue;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Try jsQR on canvas
+  if (typeof jsQR !== 'undefined') {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imgData.data, imgData.width, imgData.height);
+    if (code && code.data) return code.data;
+
+    // Secondary pass: scale down if high-res screenshot
+    if (canvas.width > 800 || canvas.height > 800) {
+      const scale = Math.min(800 / canvas.width, 800 / canvas.height);
+      const smallCanvas = document.createElement('canvas');
+      smallCanvas.width = Math.round(canvas.width * scale);
+      smallCanvas.height = Math.round(canvas.height * scale);
+      const smallCtx = smallCanvas.getContext('2d');
+      smallCtx.drawImage(img, 0, 0, smallCanvas.width, smallCanvas.height);
+      const smallData = smallCtx.getImageData(0, 0, smallCanvas.width, smallCanvas.height);
+      const smallCode = jsQR(smallData.data, smallData.width, smallData.height);
+      if (smallCode && smallCode.data) return smallCode.data;
+    }
+  }
+
+  return null;
+}
+
+function handleDecodedQrText(text) {
+  const trimmed = text.trim();
+
+  // Case A: Google Authenticator export QR code
+  if (trimmed.startsWith('otpauth-migration://offline?')) {
+    try {
+      const url = new URL(trimmed);
+      const b64Data = decodeURIComponent(url.searchParams.get('data') || '');
+      const parsedAccounts = decodeGoogleMigration(b64Data);
+      if (parsedAccounts.length === 0) {
+        showQrStatus('Could not extract any accounts from migration QR.', false);
+        return;
+      }
+      const existing = getAccounts();
+      parsedAccounts.forEach(acc => {
+        existing.unshift({
+          id: 'acc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          name: acc.name,
+          issuer: acc.issuer,
+          secret: acc.secret
+        });
+      });
+      saveAccounts(existing);
+      render();
+      showQrStatus(`Successfully imported ${parsedAccounts.length} account(s) from Google Authenticator!`, true);
+      showToast(`Imported ${parsedAccounts.length} accounts!`);
+      setTimeout(() => toggleAddForm(), 1200);
+      return;
+    } catch (e) {
+      showQrStatus('Error decoding migration data: ' + e.message, false);
+      return;
+    }
+  }
+
+  // Case B: Standard otpauth://totp/ QR code
+  if (trimmed.startsWith('otpauth://')) {
+    try {
+      const url = new URL(trimmed);
+      const secret = (url.searchParams.get('secret') || '').replace(/[\s=-]/g, '').toUpperCase();
+      let issuer = url.searchParams.get('issuer') || '';
+      let label = decodeURIComponent(url.pathname.replace(/^\/\/totp\//, '').replace(/^\/totp\//, ''));
+      if (!issuer && label.includes(':')) {
+        issuer = label.split(':')[0];
+        label = label.split(':')[1];
+      }
+      if (!secret) {
+        showQrStatus('QR code did not contain a secret key.', false);
+        return;
+      }
+      const accounts = getAccounts();
+      accounts.unshift({
+        id: 'acc_' + Date.now(),
+        name: label || issuer || 'New Account',
+        issuer: issuer,
+        secret: secret
+      });
+      saveAccounts(accounts);
+      render();
+      showQrStatus(`Added "${label || issuer || 'New Account'}" successfully!`, true);
+      showToast(`Added ${label || issuer || 'Account'}!`);
+      setTimeout(() => toggleAddForm(), 1200);
+      return;
+    } catch (e) {
+      showQrStatus('Error parsing OTP URI: ' + e.message, false);
+      return;
+    }
+  }
+
+  // Case C: Plain Base32 key encoded in QR
+  const cleaned = trimmed.replace(/[\s=-]/g, '').toUpperCase();
+  if (/^[A-Z2-7]{16,64}$/.test(cleaned)) {
+    const accounts = getAccounts();
+    accounts.unshift({
+      id: 'acc_' + Date.now(),
+      name: 'Imported Key',
+      issuer: '2FA',
+      secret: cleaned
+    });
+    saveAccounts(accounts);
+    render();
+    showQrStatus('Added secret key successfully!', true);
+    showToast('Secret key imported!');
+    setTimeout(() => toggleAddForm(), 1200);
+    return;
+  }
+
+  showQrStatus('QR code decoded but unrecognized format: ' + trimmed.substring(0, 40) + '...', false);
+}
+
+// Google Authenticator Migration Protobuf Decoder in Pure JS
+function decodeGoogleMigration(dataBase64) {
+  const binary = atob(dataBase64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+  function readVarint(arr, offset) {
+    let res = 0, shift = 0;
+    while (offset < arr.length) {
+      const b = arr[offset++];
+      res |= (b & 0x7f) << shift;
+      if (!(b & 0x80)) break;
+      shift += 7;
+    }
+    return [res, offset];
+  }
+
+  function bytesToBase32(rawBytes) {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+    let bits = 0, value = 0, output = '';
+    for (let i = 0; i < rawBytes.length; i++) {
+      value = (value << 8) | rawBytes[i];
+      bits += 8;
+      while (bits >= 5) {
+        output += alphabet[(value >>> (bits - 5)) & 31];
+        bits -= 5;
+      }
+    }
+    if (bits > 0) output += alphabet[(value << (5 - bits)) & 31];
+    return output;
+  }
+
+  function parseOtpParam(chunk) {
+    let pos = 0;
+    const p = {};
+    while (pos < chunk.length) {
+      let tag;
+      [tag, pos] = readVarint(chunk, pos);
+      const fieldNum = tag >> 3;
+      const wireType = tag & 0x7;
+      if (wireType === 0) {
+        let val;
+        [val, pos] = readVarint(chunk, pos);
+        p[fieldNum] = val;
+      } else if (wireType === 2) {
+        let len;
+        [len, pos] = readVarint(chunk, pos);
+        p[fieldNum] = chunk.slice(pos, pos + len);
+        pos += len;
+      }
+    }
+    return p;
+  }
+
+  let pos = 0;
+  const accounts = [];
+  while (pos < bytes.length) {
+    let tag;
+    [tag, pos] = readVarint(bytes, pos);
+    const fieldNum = tag >> 3;
+    const wireType = tag & 0x7;
+    if (wireType === 0) {
+      let val;
+      [val, pos] = readVarint(bytes, pos);
+    } else if (wireType === 2) {
+      let len;
+      [len, pos] = readVarint(bytes, pos);
+      const chunk = bytes.slice(pos, pos + len);
+      pos += len;
+      if (fieldNum === 1) {
+        const otp = parseOtpParam(chunk);
+        const secret = otp[1] ? bytesToBase32(otp[1]) : '';
+        const name = otp[2] ? new TextDecoder().decode(otp[2]) : '';
+        const issuer = otp[3] ? new TextDecoder().decode(otp[3]) : '';
+        if (secret) accounts.push({ name, issuer, secret });
+      }
+    }
+  }
+  return accounts;
+}
+
+// --- TOTP Algorithm Implementation (RFC 6238) ---
+function base32ToBytes(base32) {
+  const clean = base32.replace(/[\s=-]/g, '').toUpperCase();
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0, value = 0;
+  const bytes = [];
+  for (let i = 0; i < clean.length; i++) {
+    const idx = alphabet.indexOf(clean[i]);
+    if (idx === -1) continue;
+    value = (value << 5) | idx;
+    bits += 5;
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 255);
+      bits -= 8;
+    }
+  }
+  return new Uint8Array(bytes);
+}
+
+function sha1(bytes) {
+  let h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476, h4 = 0xc3d2e1f0;
+  const n = bytes.length, bitLen = n * 8, padLen = (((n + 8) >> 6) + 1) * 64;
+  const padded = new Uint8Array(padLen);
+  padded.set(bytes);
+  padded[n] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padLen - 4, bitLen & 0xffffffff, false);
+  view.setUint32(padLen - 8, Math.floor(bitLen / 0x100000000), false);
+
+  const w = new Uint32Array(80);
+  for (let i = 0; i < padLen; i += 64) {
+    for (let t = 0; t < 16; t++) w[t] = view.getUint32(i + t * 4, false);
+    for (let t = 16; t < 80; t++) {
+      const v = w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16];
+      w[t] = (v << 1) | (v >>> 31);
+    }
+    let a = h0, b = h1, c = h2, d = h3, e = h4;
+    for (let t = 0; t < 80; t++) {
+      let f, k;
+      if (t < 20) { f = (b & c) | ((~b) & d); k = 0x5a827999; }
+      else if (t < 40) { f = b ^ c ^ d; k = 0x6ed9eba1; }
+      else if (t < 60) { f = (b & c) | (b & d) | (c & d); k = 0x8f1bbcdc; }
+      else { f = b ^ c ^ d; k = 0xca62c1d6; }
+      const temp = (((a << 5) | (a >>> 27)) + f + e + k + w[t]) >>> 0;
+      e = d; d = c; c = ((b << 30) | (b >>> 2)) >>> 0; b = a; a = temp;
+    }
+    h0 = (h0 + a) >>> 0; h1 = (h1 + b) >>> 0; h2 = (h2 + c) >>> 0; h3 = (h3 + d) >>> 0; h4 = (h4 + e) >>> 0;
+  }
+  const res = new Uint8Array(20);
+  const outView = new DataView(res.buffer);
+  outView.setUint32(0, h0, false); outView.setUint32(4, h1, false);
+  outView.setUint32(8, h2, false); outView.setUint32(12, h3, false); outView.setUint32(16, h4, false);
+  return res;
+}
+
+function hmacSha1(key, message) {
+  const blockSize = 64;
+  let k = key;
+  if (k.length > blockSize) k = sha1(k);
+  const keyPad = new Uint8Array(blockSize);
+  keyPad.set(k);
+  const oKeyPad = new Uint8Array(blockSize);
+  const iKeyPad = new Uint8Array(blockSize);
+  for (let i = 0; i < blockSize; i++) {
+    oKeyPad[i] = keyPad[i] ^ 0x5c;
+    iKeyPad[i] = keyPad[i] ^ 0x36;
+  }
+  const innerMsg = new Uint8Array(blockSize + message.length);
+  innerMsg.set(iKeyPad, 0);
+  innerMsg.set(message, blockSize);
+  const innerHash = sha1(innerMsg);
+
+  const outerMsg = new Uint8Array(blockSize + 20);
+  outerMsg.set(oKeyPad, 0);
+  outerMsg.set(innerHash, blockSize);
+  return sha1(outerMsg);
+}
+
+function calculateTOTP(secretBase32, period = 30, digits = 6, timestamp = Date.now()) {
+  try {
+    const key = base32ToBytes(secretBase32);
+    if (!key || key.length === 0) return '------';
+
+    const counter = Math.floor(timestamp / 1000 / period);
+    const counterBuf = new Uint8Array(8);
+    const view = new DataView(counterBuf.buffer);
+    view.setUint32(0, Math.floor(counter / 0x100000000), false);
+    view.setUint32(4, counter >>> 0, false);
+
+    const hmac = hmacSha1(key, counterBuf);
+    const offset = hmac[hmac.length - 1] & 0x0f;
+    const binary =
+      ((hmac[offset] & 0x7f) << 24) |
+      ((hmac[offset + 1] & 0xff) << 16) |
+      ((hmac[offset + 2] & 0xff) << 8) |
+      (hmac[offset + 3] & 0xff);
+
+    const otp = binary % (10 ** digits);
+    return otp.toString().padStart(digits, '0');
+  } catch (err) {
+    return 'ERR';
+  }
+}
+
+// --- App State & Storage ---
+const STORAGE_KEY = 'desktop_authenticator_accounts_v2';
+
+function getAccounts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  saveAccounts(DEFAULT_ACCOUNTS);
+  return DEFAULT_ACCOUNTS;
+}
+
+function saveAccounts(accounts) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+  } catch (e) {}
+}
+
+function toggleAddForm() {
+  const panel = document.getElementById('add-form-panel');
+  panel.classList.toggle('hidden');
+  document.getElementById('qr-status').classList.add('hidden');
+  if (!panel.classList.contains('hidden')) {
+    switchAddTab('qr');
+  }
+}
+
+function saveAccount() {
+  const nameInput = document.getElementById('acc-name');
+  const secretInput = document.getElementById('acc-secret');
+  const rawSecret = secretInput.value.trim();
+  const rawName = nameInput.value.trim();
+
+  if (!rawSecret) {
+    alert('Please enter a secret setup key or otpauth:// URI.');
+    return;
+  }
+
+  let finalSecret = rawSecret;
+  let finalIssuer = '';
+  let finalName = rawName;
+
+  if (rawSecret.startsWith('otpauth://')) {
+    try {
+      const url = new URL(rawSecret);
+      finalSecret = url.searchParams.get('secret') || '';
+      finalIssuer = url.searchParams.get('issuer') || '';
+      const label = decodeURIComponent(url.pathname.replace(/^\/\/totp\//, '').replace(/^\/totp\//, ''));
+      if (!finalName) finalName = label;
+    } catch(e) {}
+  }
+
+  finalSecret = finalSecret.replace(/[\s=-]/g, '').toUpperCase();
+  if (!finalName) finalName = finalIssuer || 'Account';
+
+  const accounts = getAccounts();
+  accounts.unshift({
+    id: 'acc_' + Date.now(),
+    name: finalName,
+    issuer: finalIssuer,
+    secret: finalSecret
+  });
+
+  saveAccounts(accounts);
+  nameInput.value = '';
+  secretInput.value = '';
+  toggleAddForm();
+  render();
+  showToast('Account added successfully!');
+}
+
+function deleteAccount(id) {
+  if (!confirm('Are you sure you want to remove this account?')) return;
+  const accounts = getAccounts().filter(a => a.id !== id);
+  saveAccounts(accounts);
+  render();
+}
+
+function copyCode(code) {
+  if (!code || code === '------') return;
+  navigator.clipboard.writeText(code).then(() => {
+    showToast('Copied ' + code + ' to clipboard!');
+  }).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = code;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('Copied ' + code + ' to clipboard!');
+  });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function exportData() {
+  const accounts = getAccounts();
+  const blob = new Blob([JSON.stringify(accounts, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `authenticator-backup-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const data = JSON.parse(event.target.result);
+      if (Array.isArray(data)) {
+        saveAccounts(data);
+        render();
+        showToast('Imported ' + data.length + ' accounts!');
+      }
+    } catch(err) {
+      alert('Invalid JSON file format.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// --- Render Loop ---
+function render() {
+  const allAccounts = getAccounts();
+  document.getElementById('account-count').textContent = `(${allAccounts.length} accounts)`;
+
+  const query = (document.getElementById('search-input').value || '').toLowerCase().trim();
+  const filtered = query
+    ? allAccounts.filter(a => (a.name || '').toLowerCase().includes(query) || (a.issuer || '').toLowerCase().includes(query))
+    : allAccounts;
+
+  const container = document.getElementById('accounts-container');
+  const emptyState = document.getElementById('empty-state');
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    emptyState.classList.remove('hidden');
+    return;
+  }
+  emptyState.classList.add('hidden');
+
+  const now = Date.now();
+  const secondsLeft = 30 - (Math.floor(now / 1000) % 30);
+  const circumference = 2 * Math.PI * 14; // r=14 -> ~88
+  const progressOffset = circumference - (circumference * (secondsLeft / 30));
+
+  const isLow = secondsLeft <= 5;
+  const timerColor = isLow ? 'var(--danger)' : 'var(--primary)';
+
+  let html = '';
+  filtered.forEach(acc => {
+    const rawOtp = calculateTOTP(acc.secret, 30, 6, now);
+    const formatted = rawOtp.length === 6 ? `${rawOtp.slice(0, 3)} ${rawOtp.slice(3)}` : rawOtp;
+
+    html += `
+      <div class="account-card">
+        <div class="account-info">
+          <div class="account-top">
+            ${acc.issuer ? `<span class="account-issuer">${escapeHtml(acc.issuer)}</span>` : ''}
+            <span class="account-name">${escapeHtml(acc.name)}</span>
+          </div>
+          <div class="account-secret-hint">Key: ••••••••${acc.secret.slice(-4)}</div>
+        </div>
+
+        <div class="code-container">
+          <div class="timer-badge" title="${secondsLeft}s remaining">
+            <svg class="timer-svg" viewBox="0 0 36 36">
+              <circle class="timer-circle-bg" cx="18" cy="18" r="14"></circle>
+              <circle class="timer-circle-progress" cx="18" cy="18" r="14" 
+                      style="stroke-dasharray: ${circumference}; stroke-dashoffset: ${progressOffset}; stroke: ${timerColor};"></circle>
+            </svg>
+            <span class="timer-text" style="color: ${timerColor};">${secondsLeft}</span>
+          </div>
+
+          <div class="code-pill" onclick="copyCode('${rawOtp}')" title="Click to copy code">
+            <span>${formatted}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.6;">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </div>
+
+          <button class="btn-danger" onclick="deleteAccount('${acc.id}')" title="Delete account">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>'"]/g, 
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
+// Initial render
+render();
+setInterval(render, 500);
+</script>
+
+</body>
+</html>
