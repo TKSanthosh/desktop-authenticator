@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Desktop Authenticator</title>
   <script src="jsQR.js"></script>
+  <script src="vault-data.js" onerror="console.log('No local vault-data.js found')"></script>
   <style>
     :root {
       --bg: #0b0f19;
@@ -621,6 +622,12 @@
           <label for="login-password">Password / PIN</label>
           <input type="password" id="login-password" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
         </div>
+        <div class="auth-form-group" style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-bottom: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted); margin-bottom: 0;">
+            <input type="checkbox" id="login-remember" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+            Remember Me on this device
+          </label>
+        </div>
         <div id="login-error" class="auth-error"></div>
         <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 6px; font-size: 14px;">
           Log In
@@ -633,6 +640,9 @@
     <div id="auth-mode-register" class="hidden">
       <h2>Create Account</h2>
       <p>Set a unique username & password. Your 2FA codes will be encrypted with AES-256.</p>
+      <div id="vault-detected-hint" class="hidden" style="margin-bottom: 14px; padding: 10px 12px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; font-size: 12px; color: var(--primary); text-align: left;">
+        📁 Local desktop vault detected with <strong id="vault-detected-count">9</strong> accounts. Setting a password will protect and import them all automatically.
+      </div>
       <form onsubmit="handleRegisterSubmit(event)">
         <div class="auth-form-group">
           <label for="reg-username">Choose Username</label>
@@ -645,6 +655,12 @@
         <div class="auth-form-group">
           <label for="reg-password-confirm">Confirm Password / PIN</label>
           <input type="password" id="reg-password-confirm" class="auth-input" placeholder="Re-enter password" autocomplete="new-password" required>
+        </div>
+        <div class="auth-form-group" style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; margin-bottom: 8px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted); margin-bottom: 0;">
+            <input type="checkbox" id="reg-remember" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+            Remember Me on this device
+          </label>
         </div>
         <div id="register-error" class="auth-error"></div>
         <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; padding: 12px; margin-top: 6px; font-size: 14px;">
@@ -681,6 +697,10 @@
       <button class="btn-primary" onclick="toggleAddForm()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         Add Account
+      </button>
+      <button class="btn-secondary" onclick="saveVaultToDisk()" title="Save persistent vault to local file (vault-data.js) to survive all system restarts">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Save to Disk
       </button>
       <button class="btn-secondary" onclick="exportData()" title="Backup Accounts to JSON">
         Backup
@@ -783,15 +803,86 @@
 <div id="toast" class="toast">Copied to clipboard!</div>
 
 <script>
-// --- Multi-User Cryptographic Vault Architecture ---
+// --- Multi-User Cryptographic Vault Architecture with Dual-Layer Durability ---
 const REGISTRY_STORAGE_KEY = 'authenticator_users_registry_v1';
 const LEGACY_STORAGE_KEY = 'desktop_authenticator_accounts_v2';
 const SESSION_USER_KEY = 'authenticator_current_user';
+const SESSION_PERSIST_KEY = 'authenticator_device_session_v1';
+const DB_NAME = 'DesktopAuthenticatorDB_v1';
+const DB_STORE = 'app_state';
 
 let currentUsername = null;
 let currentCryptoKey = null;
 let userAccounts = [];
 let renderInterval = null;
+
+// IndexedDB Storage Engine (Survives browser cache sweeps and reboots)
+function openDB() {
+  return new Promise((resolve) => {
+    if (!window.indexedDB) return resolve(null);
+    try {
+      const req = window.indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(DB_STORE)) {
+          db.createObjectStore(DB_STORE);
+        }
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror = () => resolve(null);
+    } catch(err) {
+      resolve(null);
+    }
+  });
+}
+
+async function idbGet(key) {
+  try {
+    const db = await openDB();
+    if (!db) return null;
+    return new Promise((resolve) => {
+      const tx = db.transaction(DB_STORE, 'readonly');
+      const store = tx.objectStore(DB_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch(e) {
+    return null;
+  }
+}
+
+async function idbSet(key, value) {
+  try {
+    const db = await openDB();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      const store = tx.objectStore(DB_STORE);
+      const req = store.put(value, key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    });
+  } catch(e) {
+    return false;
+  }
+}
+
+async function idbRemove(key) {
+  try {
+    const db = await openDB();
+    if (!db) return false;
+    return new Promise((resolve) => {
+      const tx = db.transaction(DB_STORE, 'readwrite');
+      const store = tx.objectStore(DB_STORE);
+      const req = store.delete(key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = () => resolve(false);
+    });
+  } catch(e) {
+    return false;
+  }
+}
 
 function getUsersRegistry() {
   try {
@@ -802,8 +893,38 @@ function getUsersRegistry() {
   }
 }
 
-function saveUsersRegistry(reg) {
-  localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(reg));
+// Asynchronous full load (checks localStorage -> IndexedDB -> window.DEFAULT_PERSISTENT_VAULT)
+async function loadUsersRegistryAsync() {
+  let reg = getUsersRegistry();
+
+  // 1. If localStorage was empty (e.g. Edge swept session), restore from IndexedDB
+  if (!reg || Object.keys(reg).length === 0) {
+    const fromIdb = await idbGet(REGISTRY_STORAGE_KEY);
+    if (fromIdb && typeof fromIdb === 'object' && Object.keys(fromIdb).length > 0) {
+      reg = fromIdb;
+      try { localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(reg)); } catch(e) {}
+    }
+  }
+
+  // 2. Check window.DEFAULT_PERSISTENT_VAULT from vault-data.js (hard disk file)
+  if (typeof window.DEFAULT_PERSISTENT_VAULT !== 'undefined' && window.DEFAULT_PERSISTENT_VAULT) {
+    const defaultUser = (window.DEFAULT_PERSISTENT_VAULT.defaultUsername || 'TKSanthosh').toLowerCase();
+    // If vault-data.js has a userProfile and registry is missing it, restore it!
+    if (window.DEFAULT_PERSISTENT_VAULT.userProfile && !reg[defaultUser]) {
+      reg[defaultUser] = window.DEFAULT_PERSISTENT_VAULT.userProfile;
+      try { localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(reg)); } catch(e) {}
+      await idbSet(REGISTRY_STORAGE_KEY, reg);
+    }
+  }
+
+  return reg;
+}
+
+async function saveUsersRegistryAsync(reg) {
+  try {
+    localStorage.setItem(REGISTRY_STORAGE_KEY, JSON.stringify(reg));
+  } catch(e) {}
+  await idbSet(REGISTRY_STORAGE_KEY, reg);
 }
 
 // Derive AES-256 Key & Verifier Hash using PBKDF2
@@ -822,7 +943,7 @@ async function deriveUserKeys(password, saltBytes) {
     { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
     baseKey,
     { name: 'AES-GCM', length: 256 },
-    false,
+    true, // Extractable so Remember Me can store it in IndexedDB
     ['encrypt', 'decrypt']
   );
 
@@ -885,6 +1006,7 @@ async function handleRegisterSubmit(e) {
   const user = document.getElementById('reg-username').value.trim();
   const pass1 = document.getElementById('reg-password').value;
   const pass2 = document.getElementById('reg-password-confirm').value;
+  const rememberMe = document.getElementById('reg-remember') ? document.getElementById('reg-remember').checked : true;
   const errEl = document.getElementById('register-error');
 
   if (user.length < 2) {
@@ -900,29 +1022,33 @@ async function handleRegisterSubmit(e) {
     return;
   }
 
-  const registry = getUsersRegistry();
+  const registry = await loadUsersRegistryAsync();
   const userKey = user.toLowerCase();
   if (registry[userKey]) {
     errEl.textContent = 'Username already exists. Please choose another or Log In.';
     return;
   }
 
-  // Check if legacy imported accounts exist on this device to migrate
+  // Check persistent disk vault, then legacy localStorage
   let initialAccounts = [];
-  try {
-    const rawLegacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (rawLegacy) {
-      const parsed = JSON.parse(rawLegacy);
-      if (Array.isArray(parsed) && parsed.length > 0) initialAccounts = parsed;
-    }
-  } catch(e) {}
+  if (typeof window.DEFAULT_PERSISTENT_VAULT !== 'undefined' && window.DEFAULT_PERSISTENT_VAULT && Array.isArray(window.DEFAULT_PERSISTENT_VAULT.accounts) && window.DEFAULT_PERSISTENT_VAULT.accounts.length > 0) {
+    initialAccounts = JSON.parse(JSON.stringify(window.DEFAULT_PERSISTENT_VAULT.accounts));
+  } else {
+    try {
+      const rawLegacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (rawLegacy) {
+        const parsed = JSON.parse(rawLegacy);
+        if (Array.isArray(parsed) && parsed.length > 0) initialAccounts = parsed;
+      }
+    } catch(e) {}
+  }
 
   const salt = window.crypto.getRandomValues(new Uint8Array(16));
   const saltB64 = btoa(String.fromCharCode(...salt));
   const { aesKey, verifierB64 } = await deriveUserKeys(pass1, salt);
   const encrypted = await encryptVault(aesKey, initialAccounts);
 
-  registry[userKey] = {
+  const profileRecord = {
     username: user,
     salt: saltB64,
     verifier: verifierB64,
@@ -931,9 +1057,22 @@ async function handleRegisterSubmit(e) {
     created: Date.now()
   };
 
-  saveUsersRegistry(registry);
-  // Clear unencrypted legacy fallback
-  try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch(e){}
+  registry[userKey] = profileRecord;
+  await saveUsersRegistryAsync(registry);
+
+  // Keep in-memory vault synced
+  if (window.DEFAULT_PERSISTENT_VAULT) {
+    window.DEFAULT_PERSISTENT_VAULT.userProfile = profileRecord;
+    window.DEFAULT_PERSISTENT_VAULT.accounts = initialAccounts;
+  }
+
+  // Handle Remember Me session
+  if (rememberMe) {
+    try {
+      const jwkKey = await window.crypto.subtle.exportKey('jwk', aesKey);
+      await idbSet(SESSION_PERSIST_KEY, { username: user, cachedKey: jwkKey, savedAt: Date.now() });
+    } catch(e) {}
+  }
 
   currentUsername = user;
   currentCryptoKey = aesKey;
@@ -947,10 +1086,11 @@ async function handleLoginSubmit(e) {
   e.preventDefault();
   const user = document.getElementById('login-username').value.trim();
   const pass = document.getElementById('login-password').value;
+  const rememberMe = document.getElementById('login-remember') ? document.getElementById('login-remember').checked : true;
   const errEl = document.getElementById('login-error');
   const cardBox = document.getElementById('auth-card-box');
 
-  const registry = getUsersRegistry();
+  const registry = await loadUsersRegistryAsync();
   const userKey = user.toLowerCase();
   const record = registry[userKey];
 
@@ -976,6 +1116,16 @@ async function handleLoginSubmit(e) {
     currentCryptoKey = aesKey;
     userAccounts = accounts;
 
+    // Handle Remember Me
+    if (rememberMe) {
+      try {
+        const jwkKey = await window.crypto.subtle.exportKey('jwk', aesKey);
+        await idbSet(SESSION_PERSIST_KEY, { username: record.username, cachedKey: jwkKey, savedAt: Date.now() });
+      } catch(e) {}
+    } else {
+      await idbRemove(SESSION_PERSIST_KEY);
+    }
+
     finishLogin();
   } catch (err) {
     errEl.textContent = 'Failed to decrypt vault: ' + err.message;
@@ -990,7 +1140,7 @@ function shakeAuthCard(el) {
 }
 
 function finishLogin() {
-  sessionStorage.setItem(SESSION_USER_KEY, currentUsername);
+  try { sessionStorage.setItem(SESSION_USER_KEY, currentUsername); } catch(e) {}
   document.getElementById('logged-username').textContent = currentUsername;
   document.getElementById('auth-overlay').classList.add('hidden');
   render();
@@ -1000,11 +1150,12 @@ function finishLogin() {
   showToast(`Welcome, ${currentUsername}!`);
 }
 
-function logout() {
+async function logout() {
   currentUsername = null;
   currentCryptoKey = null;
   userAccounts = [];
-  sessionStorage.removeItem(SESSION_USER_KEY);
+  try { sessionStorage.removeItem(SESSION_USER_KEY); } catch(e) {}
+  await idbRemove(SESSION_PERSIST_KEY);
   if (renderInterval) {
     clearInterval(renderInterval);
     renderInterval = null;
@@ -1019,7 +1170,7 @@ function logout() {
 
 async function saveCurrentVault() {
   if (!currentUsername || !currentCryptoKey) return;
-  const registry = getUsersRegistry();
+  const registry = await loadUsersRegistryAsync();
   const userKey = currentUsername.toLowerCase();
   const record = registry[userKey];
   if (!record) return;
@@ -1028,20 +1179,123 @@ async function saveCurrentVault() {
   record.iv = encrypted.iv;
   record.cipher = encrypted.cipher;
   registry[userKey] = record;
-  saveUsersRegistry(registry);
+  await saveUsersRegistryAsync(registry);
+
+  if (window.DEFAULT_PERSISTENT_VAULT && (window.DEFAULT_PERSISTENT_VAULT.defaultUsername || '').toLowerCase() === userKey) {
+    window.DEFAULT_PERSISTENT_VAULT.userProfile = record;
+    window.DEFAULT_PERSISTENT_VAULT.accounts = userAccounts;
+  }
+}
+
+// Disk Export & Synchronization
+function generateVaultFileContent() {
+  const defaultUser = currentUsername || (window.DEFAULT_PERSISTENT_VAULT ? window.DEFAULT_PERSISTENT_VAULT.defaultUsername : 'TKSanthosh');
+  const registry = getUsersRegistry();
+  const userRecord = registry[defaultUser.toLowerCase()] || (window.DEFAULT_PERSISTENT_VAULT ? window.DEFAULT_PERSISTENT_VAULT.userProfile : null);
+
+  const vaultObj = {
+    version: 1,
+    defaultUsername: defaultUser,
+    userProfile: userRecord,
+    accounts: (userAccounts && userAccounts.length > 0) ? userAccounts : (window.DEFAULT_PERSISTENT_VAULT ? window.DEFAULT_PERSISTENT_VAULT.accounts : [])
+  };
+
+  return `// Persistent Local Vault Data for Desktop Authenticator\n` +
+    `// Saved: ${new Date().toISOString()}\n` +
+    `// This file is saved directly on your hard drive and survives system restarts and browser storage wipes.\n\n` +
+    `window.DEFAULT_PERSISTENT_VAULT = ${JSON.stringify(vaultObj, null, 2)};\n`;
+}
+
+async function saveVaultToDisk() {
+  const content = generateVaultFileContent();
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'vault-data.js',
+        types: [{
+          description: 'JavaScript Vault File (*.js)',
+          accept: { 'text/javascript': ['.js'], 'application/javascript': ['.js'] }
+        }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      showToast('Vault file saved to disk successfully!');
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.warn('showSaveFilePicker failed, falling back to download:', err);
+    }
+  }
+
+  // Fallback download
+  const blob = new Blob([content], { type: 'text/javascript' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'vault-data.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Downloaded vault-data.js! Save it in your Authenticator directory.');
 }
 
 // Initial check on load
-function checkInitialState() {
-  const registry = getUsersRegistry();
+async function checkInitialState() {
+  const registry = await loadUsersRegistryAsync();
   const usersCount = Object.keys(registry).length;
 
-  if (usersCount === 0) {
-    // No users registered yet -> Show Register screen by default
+  const hasLocalVault = typeof window.DEFAULT_PERSISTENT_VAULT !== 'undefined' && window.DEFAULT_PERSISTENT_VAULT;
+  const defaultUsername = hasLocalVault ? (window.DEFAULT_PERSISTENT_VAULT.defaultUsername || 'TKSanthosh') : '';
+  const defaultUserKey = defaultUsername.toLowerCase();
+
+  // 1. Check if Remember Me auto-login session exists
+  const rememberedSession = await idbGet(SESSION_PERSIST_KEY);
+  if (rememberedSession && rememberedSession.username && registry[rememberedSession.username.toLowerCase()]) {
+    const userRecord = registry[rememberedSession.username.toLowerCase()];
+    if (rememberedSession.cachedKey) {
+      try {
+        const importedKey = await window.crypto.subtle.importKey(
+          'jwk',
+          rememberedSession.cachedKey,
+          { name: 'AES-GCM', length: 256 },
+          false,
+          ['encrypt', 'decrypt']
+        );
+        const decrypted = await decryptVault(importedKey, userRecord.iv, userRecord.cipher);
+        currentUsername = userRecord.username;
+        currentCryptoKey = importedKey;
+        userAccounts = decrypted;
+        finishLogin();
+        return;
+      } catch (e) {
+        console.warn('Remembered session key decrypt failed:', e);
+      }
+    }
+  }
+
+  // 2. Determine whether to show Register or Login
+  if (usersCount === 0 && (!hasLocalVault || !window.DEFAULT_PERSISTENT_VAULT.userProfile)) {
+    // Brand new user or local vault ready to be initialized
     switchAuthMode('register');
+    if (hasLocalVault) {
+      document.getElementById('reg-username').value = defaultUsername;
+      const detectedHint = document.getElementById('vault-detected-hint');
+      if (detectedHint) {
+        detectedHint.classList.remove('hidden');
+        const countEl = document.getElementById('vault-detected-count');
+        if (countEl) countEl.textContent = (window.DEFAULT_PERSISTENT_VAULT.accounts || []).length;
+      }
+    }
   } else {
-    // Show Login
+    // User already exists (either in IndexedDB/localStorage, or restored from vault-data.js)
     switchAuthMode('login');
+    if (defaultUsername && registry[defaultUserKey]) {
+      document.getElementById('login-username').value = registry[defaultUserKey].username;
+    } else if (usersCount > 0) {
+      document.getElementById('login-username').value = registry[Object.keys(registry)[0]].username;
+    }
   }
 }
 
