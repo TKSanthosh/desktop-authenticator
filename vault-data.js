@@ -1,0 +1,16 @@
+// Persistent Encrypted Vault Data for Desktop Authenticator
+// Protected with AES-256-GCM encryption. Requires master password to unlock.
+
+window.DEFAULT_PERSISTENT_VAULT = {
+  version: 1,
+  defaultUsername: "TKSanthosh",
+  userProfile: {
+    username: "TKSanthosh",
+    salt: "MQT4NLOv9DK5XNxd97YVDg==",
+    verifier: "oGTQWjJd1udYw6snm7Y68lVd86BhzNUDQik45LMUwZ0=",
+    iv: "oBs79QUQyh5GLjLq",
+    cipher: "ituCzivvvF4Z466J5gA57tSH4goWVVgxDj8lTINH1UJfn0HeQxa2dUB5JDLyPj2AS0OqtRbpbbpeSQdeAlJHykAFxgmlbv0q36ls1f8NG83rk7jR7vlY4koEEzPd7HjQFOFiDvrKw5c4FWkYNzdZIhKIL0Ea6QPw6yJvz6iKi5ED0YbjCkfYU26SgXMEHQUiRIIeOnI2MyHYldX16zLri48N+HSqj6/uA2M3MWVnb/frQ+puqKFLrYzHYhIeWNrm2Y3rSDXGCblF/KBYBaDQ4VYdPYQ+VOd3EuymVEdlbq1iRCnKPnE2QIZ3RPoREJ6JM2Eyrl/eu/TZ8VAgsFJOUY8wi6070CwKfgqv6Raza/TBbmFIew37aFEk+kfiCgD+3CvKmwZvIB3McqwxtvFRZBvITxIteGXnwOpc8Fb+CMRRo0g3jQf1V8JfeuXKdP9z2mTPN8n6yFY/5HQWze7+Qw2Brxolp8NsBgVUUN5eEN4Ov14ghG1AoLy6nIhpmx7oNNHp1m2x/MNwX2K2jpDHi3+QlnzX410sLqBHU7JRJAbPw+M39w0SGCdbVK8Z2OQy2ZQXwgMGvr5yN9xm9R7yMfOLgxEWK5xpG9OUiFKwmcxZziZIjZ4BsN9GE4Md7bw/fya98Ml/if5py8b2h5i6vsTMcR727cwawFkDPqDQ1qOWRrW6EPoiEmnvgF2LC3G1geoMbjbWEz+bzz10bVJbBTqALqA3Pg5vGYcmACpVm6BjkrkAJ82OlruDQjocBWrpxXWNSAuT0DWD2EKbWBFHLxhuwIIrdBKWUDcTr038xGO8+s3SMgA89E0iODf4ud6FIMoHqFNsDmgEtNPRh012uDobPLiT5KH8ArFct79rjmmcc3RN7MYGBxKyACwIGGR8blSuafKelj7hZS5dO5F05hFzQ6R+qO03JfBz1oDwh+BYdnZg8aQaigskfTErcjaQf+xPZESO/uWGdhJmSHodutPOKKIRwQQId27nnS2o/u3mGhNfgKeGvGzgqUur8Pqeq0x3mJL55cS17la2RG3PZEvpZ0a6qtj32dqI9HDzQGa743jQCMp9cZ3B1dVreQlQ1HtNRJ2ebOEluCd78tcxM+ul5NZZsbZIiVxIHKmJaTdaxr9BYVqV+RdTFRRDbTMtlXamSVtk72MACtLLQ/NsULaaj6VlIltiooDW8mDvByMP26dBGQrJ2s4Oxz5vygXM22aOmWoasD0lijTaqkvqXZ4El+lxHmPjYYlTDSBDBIfyGlAD7NQAD791Ogga0AAOestyEVvfD5JKEnyA4gdhVYrQklZZVRbxyg9r8c3bOeZuNlI=",
+    created: 1791804921500
+  },
+  accounts: []
+};

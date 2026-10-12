@@ -1,6 +1,5 @@
 node_modules/
 authenticator_backup.json
-vault-data.js
 push-to-github.bat
 *.log
 .DS_Store
